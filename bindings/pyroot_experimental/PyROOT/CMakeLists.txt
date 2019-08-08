@@ -93,6 +93,10 @@ foreach(py_source ${py_sources})
   install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -O -m py_compile ${d}/${py_source})")
 endforeach()
 
+if (NOT EXISTS ${original_library_output_directory}/python_default)
+    execute_process(COMMAND ln -s ${localruntimedir} ${original_library_output_directory}/python_default)
+endif()
+
 # Disables warnings caused by Py_RETURN_TRUE/Py_RETURN_FALSE
 if(NOT MSVC)
     target_compile_options(ROOTPython PRIVATE -Wno-strict-aliasing)
