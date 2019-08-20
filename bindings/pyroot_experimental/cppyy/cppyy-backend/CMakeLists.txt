@@ -14,6 +14,8 @@ set(py_sources
   cppyy_backend/loader.py
 )
 
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${python_build_directory}/cppyy_backend)
+
 set(d $ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/${runtimedir})
 foreach(py_source ${py_sources})
   file(COPY cling/python/${py_source} DESTINATION ${localruntimedir}/cppyy_backend)

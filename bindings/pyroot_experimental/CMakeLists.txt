@@ -5,9 +5,10 @@
 # For the list of contributors see $ROOTSYS/README/CREDITS.
 
 set(original_library_output_directory ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/python${PYTHON_VERSION_STRING})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/python${PYTHON_VERSION_STRING})
-set(localruntimedir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+set(python_build_directory ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/python${PYTHON_VERSION_STRING})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${python_build_directory}/ROOT)
+
+set(localruntimedir ${python_build_directory})
 set(runtimedir ${CMAKE_INSTALL_LIBDIR}/python${PYTHON_VERSION_STRING})
 
 add_subdirectory(cppyy)

@@ -14,6 +14,8 @@ set(py_sources
   cppyy/_version.py
 )
 
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${python_build_directory}/cppyy)
+
 set(d $ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/${runtimedir})
 foreach(py_source ${py_sources})
   file(COPY python/${py_source} DESTINATION ${localruntimedir}/cppyy)
