@@ -14,6 +14,24 @@ set(py_sources
   cppyy_backend/loader.py
 )
 
+# call setup
+set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
+set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
+set(DEPS cppyy-backend move_headers)
+set(OUTPUT      "${CMAKE_CURRENT_BINARY_DIR}/python/build/timestamp")
+
+configure_file(${SETUP_PY_IN} ${SETUP_PY})
+
+add_custom_command(OUTPUT ${OUTPUT}
+        COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} build
+        --build-base=${py_localruntimedir}
+        COMMAND ${CMAKE_COMMAND} -E touch ${OUTPUT}
+        DEPENDS ${DEPS})
+
+add_custom_target(target ALL DEPENDS ${OUTPUT})
+
+install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --prefix=${CMAKE_INSTALL_PYROOTDIR})")
+
 if(IS_ABSOLUTE ${CMAKE_INSTALL_LIBDIR})
   set(d $ENV{DESTDIR}/${CMAKE_INSTALL_LIBDIR})
 else()
@@ -26,6 +44,7 @@ foreach(py_source ${py_sources})
   install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -O -m py_compile ${d}/${py_source})")
 endforeach()
 
+#[[
 add_library(cppyy_backend SHARED clingwrapper/src/clingwrapper.cxx)
 target_include_directories(cppyy_backend PRIVATE clingwrapper/src)
 target_link_libraries(cppyy_backend Core ${CMAKE_DL_LIBS})
@@ -36,3 +55,4 @@ target_include_directories(cppyy_backend PRIVATE ${CMAKE_BINARY_DIR}/include)
 
 set_property(GLOBAL APPEND PROPERTY ROOT_EXPORTED_TARGETS cppyy_backend)
 install(TARGETS cppyy_backend EXPORT ROOTExports DESTINATION ${CMAKE_INSTALL_PYROOTDIR})
+]]
