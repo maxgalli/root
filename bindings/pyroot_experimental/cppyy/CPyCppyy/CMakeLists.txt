@@ -40,6 +40,36 @@ set(sources
     src/Utility.cxx
 )
 
+# call setup
+set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
+set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
+set(DEPS move_headers cppyy_backend)
+#set(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/python/build/timestamp")
+
+configure_file(${SETUP_PY_IN} ${SETUP_PY})
+
+#[[
+add_custom_command(OUTPUT ${OUTPUT}
+        COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} build
+        --build-base=${py_localruntimedir}
+        COMMAND ${CMAKE_COMMAND} -E touch ${OUTPUT}
+        DEPENDS ${DEPS})
+]]
+add_custom_target(cppyy
+        ALL
+        COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} build
+        --build-base=${py_localruntimedir}
+        DEPENDS ${DEPS})
+
+install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --prefix=${CMAKE_INSTALL_PYROOTDIR})")
+
+
+
+
+
+
+
+#[[
 add_library(cppyy SHARED ${headers} ${sources})
 
 if(NOT MSVC)
@@ -72,4 +102,4 @@ install(TARGETS cppyy EXPORT ${CMAKE_PROJECT_NAME}Exports DESTINATION ${CMAKE_IN
 
 file(COPY ${headers} DESTINATION ${CMAKE_BINARY_DIR}/include/CPyCppyy)
 install(FILES ${headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CPyCppyy)
-
+]]

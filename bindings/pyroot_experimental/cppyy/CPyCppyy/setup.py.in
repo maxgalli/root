@@ -1,0 +1,20 @@
+import glob, os
+from distutils.core import setup, Extension
+from sysconfig import get_config_var as suff
+
+py_localruntimedir = '${py_localruntimedir}'
+
+lib_dirs=['${py_localruntimedir}',
+        '${CMAKE_BINARY_DIR}/include',
+        '${PYTHON_INCLUDE_DIRS}'] + glob.glob(os.path.join(py_localruntimedir, 'lib*'))
+
+setup(
+        name='CPyCppyy',
+
+        ext_modules=[Extension('libcppyy',
+            sources=glob.glob(os.path.join('src', '*.cxx')),
+            include_dirs=['src', 'inc'],
+            library_dirs=lib_dirs,
+            runtime_library_dirs=lib_dirs,
+            libraries=['cppyy_backend' + '.' + suff('SOABI'), '${PYTHON_LIBRARIES}'])],
+        )

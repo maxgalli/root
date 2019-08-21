@@ -1,0 +1,15 @@
+import glob, os
+from distutils.core import setup, Extension
+
+setup(
+        name='cppyy_backend',
+        packages=['cppyy_backend'],
+        package_dir={'' : '${CMAKE_CURRENT_SOURCE_DIR}/cling/python'},
+
+        ext_modules=[Extension('libcppyy_backend',
+            sources=glob.glob(os.path.join('clingwrapper', 'src', '*.cxx')),
+            include_dirs=['clingwrapper/src', '${CMAKE_BINARY_DIR}/include'],
+            library_dirs=['${CMAKE_DL_LIBS}', '${localruntimedir}'],
+            runtime_library_dirs=['${CMAKE_DL_LIBS}', '${localruntimedir}'],
+            libraries=['Core', 'dl'])],
+        )

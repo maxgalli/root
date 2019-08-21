@@ -14,6 +14,30 @@ set(py_sources
   cppyy_backend/loader.py
 )
 
+# call setup
+set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
+set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
+set(DEPS Core move_headers)
+#set(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/python/build/timestamp")
+
+configure_file(${SETUP_PY_IN} ${SETUP_PY})
+
+#[[
+add_custom_command(OUTPUT ${OUTPUT}
+        COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} build
+        --build-base=${py_localruntimedir}
+        COMMAND ${CMAKE_COMMAND} -E touch ${OUTPUT}
+        DEPENDS ${DEPS})
+]]
+add_custom_target(cppyy_backend
+        ALL
+        COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} build
+        --build-base=${py_localruntimedir}
+        DEPENDS ${DEPS})
+
+install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --prefix=${CMAKE_INSTALL_PYROOTDIR})")
+
+#[[
 foreach(py_source ${py_sources})
   file(COPY cling/python/${py_source} DESTINATION ${py_localruntimedir}/cppyy_backend)
   install(FILES cling/python/${py_source} DESTINATION ${CMAKE_INSTALL_LIBDIR}/cppyy_backend)
@@ -31,3 +55,4 @@ target_include_directories(cppyy_backend PRIVATE ${CMAKE_BINARY_DIR}/include)
 
 set_property(GLOBAL APPEND PROPERTY ROOT_EXPORTED_TARGETS cppyy_backend)
 install(TARGETS cppyy_backend EXPORT ROOTExports DESTINATION ${CMAKE_INSTALL_LIBDIR})
+]]
