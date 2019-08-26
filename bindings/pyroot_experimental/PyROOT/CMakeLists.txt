@@ -95,9 +95,13 @@ ROOT_LINKER_LIBRARY(JupyROOT ${JupyROOTDirName}/src/IOHandler.cxx DEPENDENCIES C
 #---Install python modules----------------------------------------------------------------------
 
 file(COPY ${ROOTDirName} DESTINATION ${py_localruntimedir})
-install(DIRECTORY ${ROOTDirName} DESTINATION ${runtimedir})
+install(DIRECTORY ${ROOTDirName} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-set(d $ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/${runtimedir})
+if(IS_ABSOLUTE ${CMAKE_INSTALL_LIBDIR})
+  set(d $ENV{DESTDIR}/${CMAKE_INSTALL_LIBDIR})
+else()
+  set(d $ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
+endif()
 foreach(py_source ${py_sources})
   install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -m py_compile ${d}/${py_source})")
   install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -O -m py_compile ${d}/${py_source})")
