@@ -375,6 +375,27 @@ endforeach()
 #---Avoid creating dependencies to 'non-standard' header files -------------------------------
 include_regular_expression("^[^.]+$|[.]h$|[.]icc$|[.]hxx$|[.]hpp$")
 
+#---Check for Python installation-------------------------------------------------------
+
+message(STATUS "Looking for python")
+# Python is required by header and manpage generation
+find_package(PythonInterp ${python_version} REQUIRED)
+if(python)
+  find_package(PythonLibs ${python_version} REQUIRED)
+  if(NOT "${PYTHONLIBS_VERSION_STRING}" MATCHES "${PYTHON_VERSION_STRING}")
+    message(FATAL_ERROR "Version mismatch between Python interpreter (${PYTHON_VERSION_STRING})"
+    " and libraries (${PYTHONLIBS_VERSION_STRING}).\nROOT cannot work with this configuration. "
+    "Please specify only PYTHON_EXECUTABLE to CMake with an absolute path to ensure matching versions are found.")
+  else()
+    set(python_dir "python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}")
+    if(WIN32)
+      set(py_localruntimedir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${python_dir})
+    else()
+      set(py_localruntimedir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${python_dir})
+    endif()
+  endif()
+endif()
+
 #---Add Installation Variables------------------------------------------------------------------
 include(RootInstallDirs)
 
