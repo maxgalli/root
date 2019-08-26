@@ -464,22 +464,6 @@ if(mathmore OR builtin_gsl)
   endif()
 endif()
 
-#---Check for Python installation-------------------------------------------------------
-
-message(STATUS "Looking for python")
-# Python is required by header and manpage generation
-find_package(PythonInterp ${python_version} REQUIRED)
-
-if(python)
-  find_package(PythonLibs ${python_version} REQUIRED)
-
-  if(NOT "${PYTHONLIBS_VERSION_STRING}" MATCHES "${PYTHON_VERSION_STRING}")
-    message(FATAL_ERROR "Version mismatch between Python interpreter (${PYTHON_VERSION_STRING})"
-    " and libraries (${PYTHONLIBS_VERSION_STRING}).\nROOT cannot work with this configuration. "
-    "Please specify only PYTHON_EXECUTABLE to CMake with an absolute path to ensure matching versions are found.")
-  endif()
-endif()
-
 #---Check for OpenGL installation-------------------------------------------------------
 if(opengl)
   message(STATUS "Looking for OpenGL")

@@ -94,7 +94,7 @@ ROOT_LINKER_LIBRARY(JupyROOT ${JupyROOTDirName}/src/IOHandler.cxx DEPENDENCIES C
 
 #---Install python modules----------------------------------------------------------------------
 
-file(COPY ${ROOTDirName} DESTINATION ${localruntimedir})
+file(COPY ${ROOTDirName} DESTINATION ${py_localruntimedir})
 install(DIRECTORY ${ROOTDirName} DESTINATION ${runtimedir})
 
 set(d $ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/${runtimedir})
@@ -108,6 +108,14 @@ install(DIRECTORY ${JupyROOTDirName} DESTINATION ${runtimedir})
 
 file(COPY ${JsMVADirName} DESTINATION ${localruntimedir})
 install(DIRECTORY ${JsMVADirName} DESTINATION ${runtimedir})
+
+if(NOT EXISTS ${localruntimedir}/python_default)
+    if(WIN32)
+        execute_process(COMMAND mklink ${py_localruntimedir} ${localruntimedir}/python_default)
+    else()
+        execute_process(COMMAND ln -s ${py_localruntimedir} ${localruntimedir}/python_default)
+    endif()
+endif()
 
 # Disables warnings caused by Py_RETURN_TRUE/Py_RETURN_FALSE
 if(NOT MSVC)
