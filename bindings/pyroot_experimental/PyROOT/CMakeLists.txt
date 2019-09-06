@@ -13,8 +13,8 @@ if(dataframe)
         ROOT/pythonization/_rdataframe.py
         ROOT/pythonization/_rtensor.py)
     list(APPEND PYROOT_EXTRA_SOURCE
-        src/RDataFramePyz.cxx
-        src/RTensorPyz.cxx)
+        ROOT/src/RDataFramePyz.cxx
+        ROOT/src/RTensorPyz.cxx)
 endif()
 
 set(py_sources
@@ -55,28 +55,28 @@ ROOT_STANDARD_LIBRARY_PACKAGE(ROOTPython
     TPyReturn.h
     TPython.h
   SOURCES
-    src/CppCallablePyz.cxx
-    src/PyROOTModule.cxx
-    src/PyROOTStrings.cxx
-    src/PyROOTWrapper.cxx
-    src/RPyROOTApplication.cxx
-    src/GenericPyz.cxx
-    src/RVecPyz.cxx
-    src/TClassPyz.cxx
-    src/TClonesArrayPyz.cxx
-    src/TDirectoryFilePyz.cxx
-    src/TDirectoryPyz.cxx
-    src/TFilePyz.cxx
-    src/TMemoryRegulator.cxx
-    src/TPyArg.cxx
-    src/TPyClassGenerator.cxx
-    src/TPyReturn.cxx
-    src/TPython.cxx
-    src/TObjectPyz.cxx
-    src/TTreePyz.cxx
-    src/PyzCppHelpers.cxx
-    src/PyzPythonHelpers.cxx
-    src/CPPInstancePyz.cxx
+    ROOT/src/CppCallablePyz.cxx
+    ROOT/src/PyROOTModule.cxx
+    ROOT/src/PyROOTStrings.cxx
+    ROOT/src/PyROOTWrapper.cxx
+    ROOT/src/RPyROOTApplication.cxx
+    ROOT/src/GenericPyz.cxx
+    ROOT/src/RVecPyz.cxx
+    ROOT/src/TClassPyz.cxx
+    ROOT/src/TClonesArrayPyz.cxx
+    ROOT/src/TDirectoryFilePyz.cxx
+    ROOT/src/TDirectoryPyz.cxx
+    ROOT/src/TFilePyz.cxx
+    ROOT/src/TMemoryRegulator.cxx
+    ROOT/src/TPyArg.cxx
+    ROOT/src/TPyClassGenerator.cxx
+    ROOT/src/TPyReturn.cxx
+    ROOT/src/TPython.cxx
+    ROOT/src/TObjectPyz.cxx
+    ROOT/src/TTreePyz.cxx
+    ROOT/src/PyzCppHelpers.cxx
+    ROOT/src/PyzPythonHelpers.cxx
+    ROOT/src/CPPInstancePyz.cxx
     ${PYROOT_EXTRA_SOURCE}
   DICTIONARY_OPTIONS
     -writeEmptyRootPCM
@@ -86,11 +86,11 @@ ROOT_STANDARD_LIBRARY_PACKAGE(ROOTPython
     cppyy
 )
 
-set(ROOTDirName python/ROOT)
-set(JupyROOTDirName python/JupyROOT)
-set(JsMVADirName python/JsMVA)
+set(ROOTDirName ROOT/python/ROOT)
+set(JupyROOTDirName JupyROOT/python/JupyROOT)
+set(JsMVADirName JsMVA/python/JsMVA)
 
-ROOT_LINKER_LIBRARY(JupyROOT ${JupyROOTDirName}/src/IOHandler.cxx DEPENDENCIES Core CMAKENOEXPORT)
+ROOT_LINKER_LIBRARY(JupyROOT JupyROOT/src/IOHandler.cxx DEPENDENCIES Core CMAKENOEXPORT)
 
 #---Install python modules----------------------------------------------------------------------
 
@@ -102,11 +102,11 @@ foreach(py_source ${py_sources})
   install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -O -m py_compile ${d}/${py_source})")
 endforeach()
 
-file(COPY ${JupyROOTDirName} DESTINATION ${localruntimedir})
-install(DIRECTORY ${JupyROOTDirName} DESTINATION ${runtimedir})
+file(COPY ${JupyROOTDirName} DESTINATION ${py_localruntimedir})
+install(DIRECTORY ${JupyROOTDirName} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-file(COPY ${JsMVADirName} DESTINATION ${localruntimedir})
-install(DIRECTORY ${JsMVADirName} DESTINATION ${runtimedir})
+file(COPY ${JsMVADirName} DESTINATION ${py_localruntimedir})
+install(DIRECTORY ${JsMVADirName} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 if(NOT EXISTS ${localruntimedir}/python_default)
     if(WIN32)
@@ -129,4 +129,4 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang" AND CMAKE_CXX_STANDARD GREAT
     target_compile_options(ROOTPython PRIVATE -Wno-deprecated-register)
 endif()
 
-ROOT_ADD_TEST_SUBDIRECTORY(test)
+ROOT_ADD_TEST_SUBDIRECTORY(ROOT/test)
