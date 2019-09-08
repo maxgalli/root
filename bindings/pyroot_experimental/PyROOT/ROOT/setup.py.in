@@ -1,0 +1,22 @@
+import glob, os, sys
+from distutils.core import setup, Extension
+from sysconfig import get_config_var as suff
+
+py_localruntimedir = '${py_localruntimedir}'
+
+lib_dirs=['${py_localruntimedir}',
+        '${localruntimedir}',
+        '${PYTHON_INCLUDE_DIRS}'] + glob.glob(os.path.join(py_localruntimedir, 'lib*'))
+
+setup(
+        name='ROOT',
+        packages=['ROOT', 'ROOT.pythonization'],
+        package_dir={'' : '${CMAKE_CURRENT_SOURCE_DIR}/python'},
+
+        ext_modules=[Extension('libROOTPython',
+            sources=glob.glob(os.path.join('src', '*.cxx')),
+            include_dirs=['inc'],
+            library_dirs=lib_dirs,
+            runtime_library_dirs=lib_dirs,
+            libraries=['Core', 'Tree', 'cppyy' + '.' + suff('SOABI')])],
+        )

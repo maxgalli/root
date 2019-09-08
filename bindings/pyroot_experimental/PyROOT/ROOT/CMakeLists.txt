@@ -16,7 +16,7 @@ if(dataframe)
         src/RDataFramePyz.cxx
         src/RTensorPyz.cxx)
 endif()
-
+#[[
 set(py_sources
   ROOT/__init__.py
   ROOT/_application.py
@@ -85,17 +85,45 @@ ROOT_STANDARD_LIBRARY_PACKAGE(ROOTPython
     Tree
     cppyy
 )
-
+]]
 set(ROOTDirName python/ROOT)
 
-file(COPY ${ROOTDirName} DESTINATION ${py_localruntimedir})
-install(DIRECTORY ${ROOTDirName} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+# call setup
+set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
+set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
+set(DEPS Core Tree cppyy)
+#set(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/python/build/timestamp")
 
+configure_file(${SETUP_PY_IN} ${SETUP_PY})
+
+#[[
+add_custom_command(OUTPUT ${OUTPUT}
+        COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} build
+        --build-base=${py_localruntimedir}
+        COMMAND ${CMAKE_COMMAND} -E touch ${OUTPUT}
+        DEPENDS ${DEPS})
+]]
+#add_custom_target(target ALL DEPENDS ${OUTPUT})
+
+add_custom_target(ROOTPython
+        ALL
+        COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} build
+        --build-base=${py_localruntimedir}
+        DEPENDS ${DEPS})
+
+install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --prefix=${CMAKE_INSTALL_PYROOTDIR})")
+
+if(IS_ABSOLUTE ${CMAKE_INSTALL_LIBDIR})
+  set(d $ENV{DESTDIR}/${CMAKE_INSTALL_LIBDIR})
+else()
+  set(d $ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
+endif()
 foreach(py_source ${py_sources})
   install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -m py_compile ${d}/${py_source})")
   install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -O -m py_compile ${d}/${py_source})")
 endforeach()
 
+#[[
 # Disables warnings caused by Py_RETURN_TRUE/Py_RETURN_FALSE
 if(NOT MSVC)
     target_compile_options(ROOTPython PRIVATE -Wno-strict-aliasing)
@@ -108,5 +136,5 @@ endif()
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang" AND CMAKE_CXX_STANDARD GREATER_EQUAL 11)
     target_compile_options(ROOTPython PRIVATE -Wno-deprecated-register)
 endif()
-
+]]
 ROOT_ADD_TEST_SUBDIRECTORY(test)
