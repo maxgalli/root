@@ -88,3 +88,6 @@ def cleanup():
 
 atexit.register(cleanup)
 
+# import deprecated functions
+from _deprecated_methods import getAllClasses as getAllClasses
+setattr(cppyy, 'getAllClasses', getAllClasses)
