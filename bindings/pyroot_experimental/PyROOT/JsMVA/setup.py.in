@@ -1,0 +1,8 @@
+from distutils.core import setup
+
+setup(
+        name='JsMVA',
+
+        packages=['JsMVA'],
+        package_dir={'': '${CMAKE_CURRENT_SOURCE_DIR}/python'},
+        )
