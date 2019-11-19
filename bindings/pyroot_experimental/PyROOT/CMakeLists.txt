@@ -101,6 +101,7 @@ set(d $ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/${runtimedir})
 foreach(py_source ${py_sources})
   install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -m py_compile ${d}/${py_source})")
   install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -O -m py_compile ${d}/${py_source})")
+  configure_file(python/${py_source} ${localruntimedir}/${py_source})
 endforeach()
 
 file(COPY ${JupyROOTDirName} DESTINATION ${localruntimedir})
