@@ -53,7 +53,7 @@ typedef unsigned long  ULong_t;     //Unsigned long integer 4 bytes (unsigned lo
 typedef float          Float16_t;   //Float 4 bytes written with a truncated mantissa
 typedef double         Double32_t;  //Double 8 bytes in memory, written as a 4 bytes float
 typedef long double    LongDouble_t;//Long Double
-#if defined(R__WIN32) && !defined(__CINT__)
+#ifdef _WIN32
 typedef __int64          Long64_t;  //Portable signed long integer 8 bytes
 typedef unsigned __int64 ULong64_t; //Portable unsigned long integer 8 bytes
 #else
@@ -122,6 +122,8 @@ static inline void* CPyCppyy_PyCapsule_GetPointer(PyObject* capsule, const char*
 #define CPPYY__idiv__ "__idiv__"
 #define CPPYY__div__  "__div__"
 #define CPPYY__next__ "next"
+
+typedef long Py_hash_t;
 
 #endif  // ! 3.0
 

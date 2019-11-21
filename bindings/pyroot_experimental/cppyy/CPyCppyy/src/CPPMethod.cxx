@@ -7,9 +7,10 @@
 #include "ProxyWrappers.h"
 #include "PyStrings.h"
 #include "TypeManip.h"
+#include "SignalTryCatch.h"
 #include "Utility.h"
 
-#include "CPyCppyy/TPyException.h"
+#include "CPyCppyy/PyException.h"
 
 // Standard
 #include <assert.h>
@@ -24,6 +25,10 @@
 //- data and local helpers ---------------------------------------------------
 namespace CPyCppyy {
     extern PyObject* gThisModule;
+    extern PyObject* gBusException;
+    extern PyObject* gSegvException;
+    extern PyObject* gIllException;
+    extern PyObject* gAbrtException;
 }
 
 
@@ -44,23 +49,24 @@ inline void CPyCppyy::CPPMethod::Copy_(const CPPMethod& /* other */)
 inline void CPyCppyy::CPPMethod::Destroy_() const
 {
 // destroy executor and argument converters
-    delete fExecutor;
+    if (fExecutor && fExecutor->HasState()) delete fExecutor;
 
-    for (int i = 0; i < (int)fConverters.size(); ++i)
-        delete fConverters[i];
+    for (auto p : fConverters) {
+        if (p && p->HasState()) delete p;
+    }
 }
 
 //----------------------------------------------------------------------------
-inline PyObject* CPyCppyy::CPPMethod::CallFast(
+inline PyObject* CPyCppyy::CPPMethod::ExecuteFast(
     void* self, ptrdiff_t offset, CallContext* ctxt)
 {
-// Helper code to prevent some duplication; this is called from CallSafe() as well
-// as directly from CPPMethod::Execute in fast mode.
+// call into C++ through fExecutor; abstracted out from Execute() to prevent some
+// code duplication with ProtectedCall()
     PyObject* result = nullptr;
 
     try {       // C++ try block
         result = fExecutor->Execute(fMethod, (Cppyy::TCppObject_t)((intptr_t)self+offset), ctxt);
-    } catch (TPyException&) {
+    } catch (PyException&) {
         result = nullptr;           // error already set
     } catch (std::exception& e) {
     /* TODO: figure out what this is about ... ?
@@ -103,7 +109,7 @@ inline PyObject* CPyCppyy::CPPMethod::CallFast(
         result = nullptr;
     }
 
-// TODO: covers the TPyException throw case, which does not seem to work on Windows, so
+// TODO: covers the PyException throw case, which does not seem to work on Windows, so
 // instead leaves the error be
 #ifdef _WIN32
     if (PyErr_Occurred()) {
@@ -116,20 +122,32 @@ inline PyObject* CPyCppyy::CPPMethod::CallFast(
 }
 
 //----------------------------------------------------------------------------
-inline PyObject* CPyCppyy::CPPMethod::CallSafe(
+inline PyObject* CPyCppyy::CPPMethod::ExecuteProtected(
     void* self, ptrdiff_t offset, CallContext* ctxt)
 {
-// Helper code to prevent some code duplication; this code embeds a "try/catch"
-// block that saves the stack for restoration in case of an otherwise fatal signal.
+// helper code to prevent some code duplication; this code embeds a "try/catch"
+// block that saves the call environment for restoration in case of an otherwise
+// fatal signal
     PyObject* result = 0;
 
-//   TRY {       // ROOT "try block"
-    result = CallFast(self, offset, ctxt);
-   //   } CATCH(excode) {
-   //      PyErr_SetString(PyExc_SystemError, "problem in C++; program state has been reset");
-   //      result = 0;
-   //      Throw(excode);
-   //   } ENDTRY;
+    TRY {     // copy call environment to be able to jump back on signal
+        result = ExecuteFast(self, offset, ctxt);
+    } CATCH(excode) {
+    // Unfortunately, the excodes are not the ones from signal.h, but enums from TSysEvtHandler.h
+        if (excode == 0)
+            PyErr_SetString(gBusException, "bus error in C++; program state was reset");
+        else if (excode == 1)
+            PyErr_SetString(gSegvException, "segfault in C++; program state was reset");
+        else if (excode == 4)
+            PyErr_SetString(gIllException, "illegal instruction in C++; program state was reset");
+        else if (excode == 5)
+            PyErr_SetString(gAbrtException, "abort from C++; program state was reset");
+        else if (excode == 12)
+            PyErr_SetString(PyExc_FloatingPointError, "floating point exception in C++; program state was reset");
+        else
+            PyErr_SetString(PyExc_SystemError, "problem in C++; program state was reset");
+        result = 0;
+    } ENDTRY;
 
     return result;
 }
@@ -255,7 +273,7 @@ CPyCppyy::CPPMethod::CPPMethod(
 
 //----------------------------------------------------------------------------
 CPyCppyy::CPPMethod::CPPMethod(const CPPMethod& other) :
-        PyCallable(other), fMethod(other.fMethod), fScope(other.fScope)
+    PyCallable(other), fMethod(other.fMethod), fScope(other.fScope)
 {
     Copy_(other);
 }
@@ -357,9 +375,13 @@ int CPyCppyy::CPPMethod::GetPriority()
         // GetScope() will have been called from the first), killing the stable_sort.
 
         // prefer more derived classes
-            Cppyy::TCppScope_t scope = Cppyy::GetScope(TypeManip::clean_type(aname, false));
+            const std::string& clean_name = TypeManip::clean_type(aname, false);
+            Cppyy::TCppScope_t scope = Cppyy::GetScope(clean_name);
             if (scope)
                 priority += (int)Cppyy::GetNumBases(scope);
+
+            if (Cppyy::IsEnum(clean_name))
+                priority -= 100;
 
         // a couple of special cases as explained above
             if (aname.find("initializer_list") != std::string::npos) {
@@ -500,7 +522,7 @@ bool CPyCppyy::CPPMethod::Initialize(CallContext* ctxt)
 
 //----------------------------------------------------------------------------
 PyObject* CPyCppyy::CPPMethod::PreProcessArgs(
-        CPPInstance*& self, PyObject* args, PyObject*)
+    CPPInstance*& self, PyObject* args, PyObject*)
 {
 // verify existence of self, return if ok
     if (self) {
@@ -580,12 +602,13 @@ PyObject* CPyCppyy::CPPMethod::Execute(void* self, ptrdiff_t offset, CallContext
 // call the interface method
     PyObject* result = 0;
 
-    if (CallContext::sSignalPolicy == CallContext::kFast) {
+    if (CallContext::sSignalPolicy != CallContext::kProtected && \
+        !(ctxt->fFlags & CallContext::kProtected)) {
     // bypasses try block (i.e. segfaults will abort)
-        result = CallFast(self, offset, ctxt);
+        result = ExecuteFast(self, offset, ctxt);
     } else {
     // at the cost of ~10% performance, don't abort the interpreter on any signal
-        result = CallSafe(self, offset, ctxt);
+        result = ExecuteProtected(self, offset, ctxt);
     }
 
 // TODO: the following is dreadfully slow and dead-locks on Apache: revisit
@@ -603,7 +626,7 @@ PyObject* CPyCppyy::CPPMethod::Execute(void* self, ptrdiff_t offset, CallContext
 
 //----------------------------------------------------------------------------
 PyObject* CPyCppyy::CPPMethod::Call(
-        CPPInstance*& self, PyObject* args, PyObject* kwds, CallContext* ctxt)
+    CPPInstance*& self, PyObject* args, PyObject* kwds, CallContext* ctxt)
 {
 // setup as necessary
     if (!fIsInitialized && !Initialize(ctxt))

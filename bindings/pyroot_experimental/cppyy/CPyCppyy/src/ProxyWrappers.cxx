@@ -52,13 +52,6 @@ typedef struct {
 static PyObject* CreateNewCppProxyClass(Cppyy::TCppScope_t klass, PyObject* pybases)
 {
 // Create a new python shadow class with the required hierarchy and meta-classes.
-    Py_XINCREF(pybases);
-    if (!pybases) {
-        pybases = PyTuple_New(1);
-        Py_INCREF((PyObject*)(void*)&CPPInstance_Type);
-        PyTuple_SET_ITEM(pybases, 0, (PyObject*)(void*)&CPPInstance_Type);
-    }
-
     PyObject* pymetabases = PyTuple_New(PyTuple_GET_SIZE(pybases));
     for (int i = 0; i < PyTuple_GET_SIZE(pybases); ++i) {
         PyObject* btype = (PyObject*)Py_TYPE(PyTuple_GetItem(pybases, i));
@@ -77,7 +70,6 @@ static PyObject* CreateNewCppProxyClass(Cppyy::TCppScope_t klass, PyObject* pyba
     Py_DECREF(args);
     if (!pymeta) {
         PyErr_Print();
-        Py_DECREF(pybases);
         return nullptr;
     }
 
@@ -92,7 +84,6 @@ static PyObject* CreateNewCppProxyClass(Cppyy::TCppScope_t klass, PyObject* pyba
 
     Py_DECREF(args);
     Py_DECREF(pymeta);
-    Py_DECREF(pybases);
 
     return pyclass;
 }
@@ -193,6 +184,8 @@ static int BuildScopeProxyDict(Cppyy::TCppScope_t scope, PyObject* pyclass)
 
     // translate operators
         std::string mtName = Utility::MapOperatorName(mtCppName, Cppyy::GetMethodNumArgs(method));
+        if (mtName.empty())
+            continue;
 
     // operator[]/() returning a reference type will be used for __setitem__
         bool isCall = mtName == "__call__";
@@ -209,21 +202,9 @@ static int BuildScopeProxyDict(Cppyy::TCppScope_t scope, PyObject* pyclass)
             }
         }
 
-    // public methods are normally visible, private methods are mangled python-wise
-    // note the overload implications which are name based, and note that genreflex
-    // does not create the interface methods for private/protected methods ...
-    // TODO: check whether Cling allows private method calling; otherwise delete this
-        if (!Cppyy::IsPublicMethod(method)) {
-            if (isConstructor)               // don't expose private ctors
-                continue;
-            else {                           // mangle private methods
-            // TODO: drop use of TClassEdit here ...
-            //            const std::string& clName = TClassEdit::ShortType(
-            //               Cppyy::GetFinalName(scope).c_str(), TClassEdit::kDropAlloc);
-                const std::string& clName = Cppyy::GetFinalName(scope);
-                mtName = "_" + clName + "__" + mtName;
-           }
-        }
+    // do not expose private methods as the Cling wrappers for them won't compile
+        if (!Cppyy::IsPublicMethod(method))
+            continue;
 
     // template members; handled by adding a dispatcher to the class
         bool storeOnTemplate =
@@ -265,7 +246,6 @@ static int BuildScopeProxyDict(Cppyy::TCppScope_t scope, PyObject* pyclass)
                      pysi = TemplateProxy_New(mtCppName, "__setitem__", pyclass);
                      PyObject_SetAttrString(pyclass, const_cast<char*>("__setitem__"), (PyObject*)pysi);
                 }
-
                 if (isTemplate) pysi->AdoptTemplate(new CPPSetItem(scope, method));
                 else pysi->AdoptMethod(new CPPSetItem(scope, method));
                 Py_XDECREF(pysi);
@@ -743,7 +723,7 @@ PyObject* CPyCppyy::BindCppObjectNoCast(Cppyy::TCppObject_t address,
     bool isValue = flags & CPPInstance::kIsValue;
 
 // TODO: make sure that a consistent address is used (may have to be done in BindCppObject)
-    if (address && !isValue /* always fresh */ && flags != CPPInstance::kNoSmartConv) {
+    if (address && !isValue /* always fresh */ && !(flags & (CPPInstance::kNoWrapConv|CPPInstance::kNoMemReg))) {
         PyObject* oldPyObject = MemoryRegulator::RetrievePyObject(
             isRef ? *(void**)address : address, pyclass);
 
@@ -755,7 +735,7 @@ PyObject* CPyCppyy::BindCppObjectNoCast(Cppyy::TCppObject_t address,
     }
 
 // if smart, instantiate a Python-side object of the underlying type, carrying the smartptr
-    PyObject* smart_type = (flags != CPPInstance::kNoSmartConv && (((CPPClass*)pyclass)->fFlags & CPPScope::kIsSmart)) ? pyclass : nullptr;
+    PyObject* smart_type = (flags != CPPInstance::kNoWrapConv && (((CPPClass*)pyclass)->fFlags & CPPScope::kIsSmart)) ? pyclass : nullptr;
     if (smart_type) {
         pyclass = CreateScopeProxy(((CPPSmartClass*)smart_type)->fUnderlyingType);
         if (!pyclass) {
@@ -781,8 +761,8 @@ PyObject* CPyCppyy::BindCppObjectNoCast(Cppyy::TCppObject_t address,
         if (smart_type)
             pyobj->SetSmart(smart_type);
 
-    // do not register null pointers, references (?), or direct usage of smart pointers
-        if (address && !isRef && flags != CPPInstance::kNoSmartConv)
+    // do not register null pointers, references (?), or direct usage of smart pointers or iterators
+        if (address && !isRef && !(flags & (CPPInstance::kNoWrapConv|CPPInstance::kNoMemReg)))
             MemoryRegulator::RegisterPyObject(pyobj, pyobj->GetObject());
     }
 

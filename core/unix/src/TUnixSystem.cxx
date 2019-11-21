@@ -585,6 +585,7 @@ Bool_t TUnixSystem::Init()
    UnixSignal(kSigBus,                   SigHandler);
    UnixSignal(kSigSegmentationViolation, SigHandler);
    UnixSignal(kSigIllegalInstruction,    SigHandler);
+   UnixSignal(kSigAbort,                 SigHandler);
    UnixSignal(kSigSystem,                SigHandler);
    UnixSignal(kSigAlarm,                 SigHandler);
    UnixSignal(kSigUrgent,                SigHandler);
@@ -3582,6 +3583,7 @@ static struct Signalmap_t {
    { SIGSYS,   0, 0, "bad argument to system call" },
    { SIGPIPE,  0, 0, "write on a pipe with no one to read it" },
    { SIGILL,   0, 0, "illegal instruction" },
+   { SIGABRT,  0, 0, "abort" },
    { SIGQUIT,  0, 0, "quit" },
    { SIGINT,   0, 0, "interrupt" },
    { SIGWINCH, 0, 0, "window size change" },
@@ -3623,16 +3625,18 @@ void TUnixSystem::DispatchSignals(ESignals sig)
    case kSigBus:
    case kSigSegmentationViolation:
    case kSigIllegalInstruction:
+   case kSigAbort:
    case kSigFloatingException:
-      Break("TUnixSystem::DispatchSignals", "%s", UnixSigname(sig));
-      StackTrace();
-      if (gApplication)
+      if (gExceptionHandler)
          //sig is ESignal, should it be mapped to the correct signal number?
-         gApplication->HandleException(sig);
-      else
+         gExceptionHandler->HandleException(sig);
+      else {
          //map to the real signal code + set the
          //high order bit to indicate a signal (?)
+         Break("TUnixSystem::DispatchSignals", "%s", UnixSigname(sig));
+         StackTrace();
          Exit(gSignalMap[sig].fCode + 0x80);
+      }
       break;
    case kSigSystem:
    case kSigPipe:

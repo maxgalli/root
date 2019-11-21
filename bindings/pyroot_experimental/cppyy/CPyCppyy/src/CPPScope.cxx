@@ -95,6 +95,7 @@ static void meta_dealloc(CPPScope* scope)
     } else {
         delete scope->fImp.fCppObjects; scope->fImp.fCppObjects = nullptr;
     }
+    delete scope->fOperators;
     free(scope->fModuleName);
     return PyType_Type.tp_dealloc((PyObject*)scope);
 }
@@ -220,6 +221,7 @@ static PyObject* pt_new(PyTypeObject* subtype, PyObject* args, PyObject* kwds)
         return nullptr;
 
     result->fFlags      = CPPScope::kNone;
+    result->fOperators  = nullptr;
     result->fModuleName = nullptr;
 
     if (raw && deref) {

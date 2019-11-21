@@ -25,6 +25,8 @@ CPPYY_DECL_EXEC(CharConstRef);
 CPPYY_DECL_EXEC(UChar);
 CPPYY_DECL_EXEC(UCharConstRef);
 CPPYY_DECL_EXEC(WChar);
+CPPYY_DECL_EXEC(Char16);
+CPPYY_DECL_EXEC(Char32);
 CPPYY_DECL_EXEC(Int8);
 CPPYY_DECL_EXEC(UInt8);
 CPPYY_DECL_EXEC(Short);
@@ -39,6 +41,8 @@ CPPYY_DECL_EXEC(LongDouble);
 CPPYY_DECL_EXEC(Void);
 CPPYY_DECL_EXEC(CString);
 CPPYY_DECL_EXEC(WCString);
+CPPYY_DECL_EXEC(CString16);
+CPPYY_DECL_EXEC(CString32);
 
 // pointer/array executors
 CPPYY_DECL_EXEC(VoidArray);
@@ -60,10 +64,7 @@ CPPYY_DECL_EXEC(ComplexIArray);
 CPPYY_DECL_EXEC(ComplexLArray);
 
 // special cases
-CPPYY_DECL_EXEC(ComplexF);
 CPPYY_DECL_EXEC(ComplexD);
-CPPYY_DECL_EXEC(ComplexI);
-CPPYY_DECL_EXEC(ComplexL);
 CPPYY_DECL_EXEC(STLString);
 CPPYY_DECL_EXEC(STLWString);
 
@@ -72,16 +73,27 @@ public:
     InstancePtrExecutor(Cppyy::TCppType_t klass) : fClass(klass) {}
     virtual PyObject* Execute(
         Cppyy::TCppMethod_t, Cppyy::TCppObject_t, CallContext*);
+    virtual bool HasState() { return true; }
 
 protected:
     Cppyy::TCppType_t fClass;
 };
 
-class InstanceExecutor : public InstancePtrExecutor {
+class InstanceExecutor : public Executor {
 public:
-    using InstancePtrExecutor::InstancePtrExecutor;
+    InstanceExecutor(Cppyy::TCppType_t klass);
     virtual PyObject* Execute(
         Cppyy::TCppMethod_t, Cppyy::TCppObject_t, CallContext*);
+    virtual bool HasState() { return true; }
+
+protected:
+    Cppyy::TCppType_t fClass;
+    unsigned int      fFlags;
+};
+
+class IteratorExecutor : public InstanceExecutor {
+public:
+    IteratorExecutor(Cppyy::TCppType_t klass);
 };
 
 CPPYY_DECL_EXEC(Constructor);

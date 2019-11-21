@@ -57,13 +57,14 @@ source code):
   * Aditi Dutta
   * Shaheed Haque
   * Jonsomi
+  * Max Kolin
   * Alvaro Moran
   * Matti Picus
   * Camille Scott
   * Toby StClere-Smithe
   * Stefan Wunsch
 
-Conda-forge recipes were provided by Julian Rueth.
+Conda-forge recipes were provided by Julian Rueth and Isuru Fernando.
 
 
 External code
