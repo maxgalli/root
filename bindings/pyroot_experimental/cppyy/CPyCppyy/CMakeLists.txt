@@ -5,13 +5,15 @@
 # For the list of contributors see $ROOTSYS/README/CREDITS.
 
 set(headers
+    inc/CPyCppyy/API.h
     inc/CPyCppyy/CommonDefs.h
-    inc/CPyCppyy/TPyException.h
     inc/CPyCppyy/DispatchPtr.h
-    inc/CPyCppyy/PyObjectPtr.h
+    inc/CPyCppyy/PyException.h
+    inc/CPyCppyy/PyResult.h
 )
 
 set(sources
+    src/API.cxx
     src/CallContext.cxx
     src/Converters.cxx
     src/CPPClassMethod.cxx
@@ -34,10 +36,11 @@ set(sources
     src/PyStrings.cxx
     src/Pythonize.cxx
     src/TemplateProxy.cxx
-    src/TPyException.cxx
     src/TupleOfInstances.cxx
     src/TypeManip.cxx
     src/Utility.cxx
+    src/PyException.cxx
+    src/PyResult.cxx
 )
 
 add_library(cppyy SHARED ${headers} ${sources})
