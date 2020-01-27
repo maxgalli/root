@@ -74,13 +74,29 @@ if(NOT DEFINED CMAKE_INSTALL_SYSCONFDIR)
   endif()
 endif()
 
-# Set variables necessary for MultiPython
+# set variables necessary for MultiPython
 set(python_dir "python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}")
 if(WIN32)
   set(py_localruntimedir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${python_dir})
+  if(cmake14)
+    set(other_python_dir "python${OTHER_PYTHON_VERSION_MAJOR}.${OTHER_PYTHON_VERSION_MINOR}")
+    set(other_py_localruntimedir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${other_python_dir})
+  endif()
 else()
   set(py_localruntimedir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${python_dir})
+  if(cmake14)
+    set(other_python_dir "python${OTHER_PYTHON_VERSION_MAJOR}.${OTHER_PYTHON_VERSION_MINOR}")
+    set(other_py_localruntimedir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${other_python_dir})
+  endif()
 endif()
+
+# create lists of Python 2 and 3 useful variables
+set(python_executables ${PYTHON_EXECUTABLE} ${OTHER_PYTHON_EXECUTABLE})
+set(python_rel_output_dirs ${python_dir} ${other_python_dir})
+set(python_abs_output_dirs ${py_localruntimedir} ${other_py_localruntimedir})
+set(python_include_dirs ${PYTHON_INCLUDE_DIRS} ${OTHER_PYTHON_INCLUDE_DIRS})
+set(python_version_strings ${PYTHON_VERSION_STRING} ${OTHER_PYTHON_VERSION_STRING})
+set(python_libraries ${PYTHON_LIBRARIES} ${OTHER_PYTHON_LIBRARIES})
 
 if(NOT DEFINED CMAKE_INSTALL_PYROOTDIR)
   if(WIN32)
