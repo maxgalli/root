@@ -22,7 +22,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(ROOTTPython
     -writeEmptyRootPCM
   DEPENDENCIES
     Core
-    cppyy
+    cppyy_${python_dir}
 )
 
 # Disables warnings originating from deprecated register keyword in Python
