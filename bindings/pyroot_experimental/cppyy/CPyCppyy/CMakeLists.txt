@@ -57,6 +57,8 @@ foreach(val RANGE ${how_many_pythons})
 
   add_library(cppyy_${python_output_name} SHARED ${headers} ${sources})
 
+  set_target_properties(cppyy_${python_output_name} PROPERTIES OUTPUT_NAME "cppyy")
+
   if(NOT MSVC)
     target_compile_options(cppyy_${python_output_name} PRIVATE
       -Wno-shadow -Wno-strict-aliasing)

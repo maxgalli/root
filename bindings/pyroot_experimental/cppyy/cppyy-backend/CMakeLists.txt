@@ -33,6 +33,8 @@ foreach(val RANGE ${how_many_pythons})
   target_include_directories(cppyy_backend_${python_output_name} PRIVATE clingwrapper/src)
   target_link_libraries(cppyy_backend_${python_output_name} Core ${CMAKE_DL_LIBS})
 
+  set_target_properties(cppyy_backend_${python_output_name} PROPERTIES OUTPUT_NAME "cppyy_backend")
+
   # cppyy uses ROOT headers from binary directory
   add_dependencies(cppyy_backend_${python_output_name} move_headers)
   target_include_directories(cppyy_backend_${python_output_name} PRIVATE ${CMAKE_BINARY_DIR}/include)

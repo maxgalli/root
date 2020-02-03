@@ -92,6 +92,8 @@ foreach(val RANGE ${how_many_pythons})
 
   file(COPY ${ROOTDirName} DESTINATION ${python_output_dir})
 
+  set_target_properties(ROOTPythonizations_${python_output_name} PROPERTIES OUTPUT_NAME "ROOTPythonizations")
+
   foreach(py_source ${py_sources})
     install(CODE "execute_process(COMMAND ${python_executable} -m py_compile ${d}/${py_source})")
     install(CODE "execute_process(COMMAND ${python_executable} -O -m py_compile ${d}/${py_source})")

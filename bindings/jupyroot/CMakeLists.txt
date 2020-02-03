@@ -20,6 +20,8 @@ foreach(val RANGE ${how_many_pythons})
 
   ROOT_LINKER_LIBRARY(JupyROOT_${python_output_name} src/IOHandler.cxx DEPENDENCIES Core CMAKENOEXPORT)
 
+  set_target_properties(JupyROOT_${python_output_name} PROPERTIES OUTPUT_NAME "JupyROOT")
+
   file(COPY ${JupyROOTDirName} DESTINATION ${python_output_dir})
   install(DIRECTORY ${JupyROOTDirName} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endforeach()
