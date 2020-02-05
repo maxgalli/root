@@ -111,6 +111,18 @@ if(NOT DEFINED CMAKE_INSTALL_PYROOTDIR)
   endif()
     set(CMAKE_INSTALL_PYROOTDIR "${CMAKE_INSTALL_LIBDIR}/${python_dir}/${packages_name}"
           CACHE PATH "pyroot libraries and modules (LIBDIR/pythonX.Y/site-packages)")
+  # If CMake version is greater than 3.14, we define a second directory where the second pyroot version
+  # will be installed (the one which is not PREFER, see the search for Python in SearchInstalledSoftware)
+  # If this is the case, a list 'python_install_dirs' of two elements with the two PYROOTDIRS is defined
+  if(cmake14)
+    if(WIN32)
+      set(CMAKE_INSTALL_OTHER_PYROOTDIR ${LIBDIR}/${other_python_dir}/site-packages)
+    else()
+      set(CMAKE_INSTALL_OTHER_PYROOTDIR "${CMAKE_INSTALL_LIBDIR}/${other_python_dir}/${packages_name}"
+            CACHE PATH "pyroot libraries and modules (LIBDIR/pythonX.Y/site-packages)")
+    endif()
+    set(python_install_dirs ${CMAKE_INSTALL_PYROOTDIR} ${CMAKE_INSTALL_OTHER_PYROOTDIR})
+  endif()
 endif()
 
 if(NOT DEFINED CMAKE_INSTALL_DATAROOTDIR)
@@ -252,6 +264,7 @@ mark_as_advanced(
   CMAKE_INSTALL_INCLUDEDIR
   CMAKE_INSTALL_SYSCONFDIR
   CMAKE_INSTALL_PYROOTDIR
+  CMAKE_INSTALL_OTHERPYROOTDIR
   CMAKE_INSTALL_MANDIR
   CMAKE_INSTALL_DATAROOTDIR
   CMAKE_INSTALL_DATADIR
@@ -273,6 +286,7 @@ foreach(dir BINDIR
             INCLUDEDIR
             SYSCONFDIR
             PYROOTDIR
+            OTHERPYROOTDIR
             MANDIR
             DATAROOTDIR
             DATADIR
