@@ -100,7 +100,7 @@ set(python_libraries ${PYTHON_LIBRARIES} ${OTHER_PYTHON_LIBRARIES})
 
 if(NOT DEFINED CMAKE_INSTALL_PYROOTDIR)
   if(WIN32)
-    set(CMAKE_INSTALL_PYROOTDIR ${LIBDIR}/python/site-packages)
+    set(CMAKE_INSTALL_PYROOTDIR ${LIBDIR}/${python_dir}/site-packages)
   else()
     execute_process(COMMAND bash -c "${PYTHON_EXECUTABLE} -m site | grep -q dist-packages && echo dist-packages" OUTPUT_VARIABLE packages_name)
     if(NOT packages_name MATCHES "dist-packages")
@@ -108,9 +108,9 @@ if(NOT DEFINED CMAKE_INSTALL_PYROOTDIR)
     else()
       set(packages_name "dist-packages")
     endif()
-  endif()
     set(CMAKE_INSTALL_PYROOTDIR "${CMAKE_INSTALL_LIBDIR}/${python_dir}/${packages_name}"
           CACHE PATH "pyroot libraries and modules (LIBDIR/pythonX.Y/site-packages)")
+  endif()
   # If CMake version is greater than 3.14, we define a second directory where the second pyroot version
   # will be installed (the one which is not PREFER, see the search for Python in SearchInstalledSoftware)
   # If this is the case, a list 'python_install_dirs' of two elements with the two PYROOTDIRS is defined
