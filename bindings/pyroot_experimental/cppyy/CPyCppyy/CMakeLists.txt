@@ -52,6 +52,7 @@ foreach(val RANGE ${how_many_pythons})
   list(GET python_include_dirs ${val} python_include_dir)
   list(GET python_version_strings ${val} python_version_string)
   list(GET python_libraries ${val} python_library)
+  list(GET python_install_dirs ${val} python_install_dir)
 
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${python_output_dir})
 
@@ -95,8 +96,44 @@ foreach(val RANGE ${how_many_pythons})
   target_link_libraries(cppyy_${python_output_name} cppyy_backend_${python_output_name} ${python_library})
 
   set_property(GLOBAL APPEND PROPERTY ROOT_EXPORTED_TARGETS cppyy_${python_output_name})
-  install(TARGETS cppyy_${python_output_name} EXPORT ${CMAKE_PROJECT_NAME}Exports DESTINATION ${CMAKE_INSTALL_PYROOTDIR})
-
-  file(COPY ${headers} DESTINATION ${CMAKE_BINARY_DIR}/include/CPyCppyy)
-  install(FILES ${headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CPyCppyy)
 endforeach()
+
+# Installation
+if(cmake14 AND DEFINED python_install_dirs)
+  # Case 1: we are building PyROOT with two versions (cmake > 3.14) and, since
+  # python_install_dirs is defined, CMAKE_INSTALL_PYROOTDIR wasn't defined by
+  # the user (see RootInstallDirs)
+  # We install each target in the default Python paths related to the Python
+  # version it was built with
+  # e.g.
+  # libcppyy_python2.X -> /usr/lib/python2.X/site-packages
+  # libcppyy_python3.Y -> /usr/lib/python3.Y/site-packages
+  foreach(val RANGE ${how_many_pythons})
+    list(GET python_install_dirs ${val} python_install_dir)
+    list(GET python_rel_output_dirs ${val} python_output_name)
+    set(CMAKE_INSTALL_LIBDIR ${python_install_dir})
+    install(TARGETS cppyy_${python_output_name} EXPORT ${CMAKE_PROJECT_NAME}Exports DESTINATION ${python_install_dir})
+    install(FILES ${headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CPyCppyy)
+  endforeach()
+elseif(cmake14 AND NOT DEFINED python_install_dirs)
+  # Case 2: we are still building two versions, but in this case CMAKE_INSTALL_PYROOTDIR
+  # was defined by the user; we then install the two libcppyy libraries
+  # will end up into subdirectories placed inside CMAKE_INSTALL_PYROOTDIR
+  # e.g.
+  # libcppyy_python2.X -> CMAKE_INSTALL_PYROOTDIR/python2.X/
+  # libcppyy_python3.Y -> CMAKE_INSTALL_PYROOTDIR/python3.Y/
+  set(orig_cmake_pyroot_dir ${CMAKE_INSTALL_PYROOTDIR})
+  foreach(python_output_name ${python_rel_output_dirs})
+    set(CMAKE_INSTALL_PYROOTDIR ${orig_cmake_pyroot_dir}/${python_output_name})
+    set(CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_PYROOTDIR})
+    install(TARGETS cppyy_${python_output_name} EXPORT ${CMAKE_PROJECT_NAME}Exports DESTINATION ${CMAKE_INSTALL_PYROOTDIR})
+    install(FILES ${headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CPyCppyy)
+  endforeach()
+else()
+  # Case 3: we are building only one version, so the behavior does not change
+  list(GET python_rel_output_dirs 0 python_output_name)
+  install(TARGETS cppyy_${python_output_name} EXPORT ${CMAKE_PROJECT_NAME}Exports DESTINATION ${CMAKE_INSTALL_PYROOTDIR})
+  install(FILES ${headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CPyCppyy)
+endif()
+
+file(COPY ${headers} DESTINATION ${CMAKE_BINARY_DIR}/include/CPyCppyy)
