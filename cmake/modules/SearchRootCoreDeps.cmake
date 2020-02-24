@@ -120,3 +120,9 @@ else()
 
   set(PYTHON_VERSION_STRING "${PYTHON_VERSION_MAJOR}_${PYTHON_VERSION_MINOR}")
 endif()
+
+# create lists of Python 2 and 3 useful variables
+set(python_executables ${PYTHON_EXECUTABLE} ${OTHER_PYTHON_EXECUTABLE})
+set(python_include_dirs ${PYTHON_INCLUDE_DIRS} ${OTHER_PYTHON_INCLUDE_DIRS})
+set(python_version_strings ${PYTHON_VERSION_STRING} ${OTHER_PYTHON_VERSION_STRING})
+set(python_libraries ${PYTHON_LIBRARIES} ${OTHER_PYTHON_LIBRARIES})
