@@ -125,4 +125,10 @@ endif()
 set(python_executables ${PYTHON_EXECUTABLE} ${OTHER_PYTHON_EXECUTABLE})
 set(python_include_dirs ${PYTHON_INCLUDE_DIRS} ${OTHER_PYTHON_INCLUDE_DIRS})
 set(python_version_strings ${PYTHON_VERSION_STRING} ${OTHER_PYTHON_VERSION_STRING})
+set(python_major_versions ${PYTHON_VERSION_MAJOR} ${OTHER_PYTHON_VERSION_MAJOR})
+set(python_minor_versions ${PYTHON_VERSION_MINOR} ${OTHER_PYTHON_VERSION_MINOR})
 set(python_libraries ${PYTHON_LIBRARIES} ${OTHER_PYTHON_LIBRARIES})
+
+# Machinary necessary to loop in parallel over multiple lists
+list(LENGTH python_executables len)
+math(EXPR how_many_pythons "${len} - 1")

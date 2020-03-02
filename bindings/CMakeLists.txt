@@ -5,10 +5,6 @@
 # For the list of contributors see $ROOTSYS/README/CREDITS.
 
 if(pyroot)
-# Machinary necessary to loop in parallel over multiple lists
-list(LENGTH python_executables len)
-math(EXPR how_many_pythons "${len} - 1")
-
   if(NOT pyroot_experimental)
     add_subdirectory(pyroot)
   else()

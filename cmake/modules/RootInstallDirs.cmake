@@ -74,20 +74,28 @@ if(NOT DEFINED CMAKE_INSTALL_SYSCONFDIR)
   endif()
 endif()
 
-if(NOT DEFINED CMAKE_INSTALL_PYROOTDIR)
-  if(WIN32)
-    set(CMAKE_INSTALL_PYROOTDIR ${LIBDIR}/python/site-packages)
-  else()
-    execute_process(COMMAND bash -c "${PYTHON_EXECUTABLE} -m site | grep -q dist-packages && echo dist-packages" OUTPUT_VARIABLE packages_name)
-    if(NOT packages_name MATCHES "dist-packages")
-      set(packages_name "site-packages")
+set(pyroot_install_dirs)
+foreach(val RANGE ${how_many_pythons})
+  list(GET python_executables ${val} python_executable)
+  list(GET python_major_versions ${val} python_major_version)
+  list(GET python_minor_versions ${val} python_minor_version)
+  set(cmake_install_pyrootdir CMAKE_INSTALL_PY${python_major_version}ROOTDIR)
+  if(NOT DEFINED ${cmake_install_pyrootdir})
+    if(WIN32)
+      set(${cmake_install_pyrootdir} ${LIBDIR}/python/site-packages)
     else()
-      set(packages_name "dist-packages")
+      execute_process(COMMAND bash -c "${python_executable} -m site | grep -q dist-packages && echo dist-packages" OUTPUT_VARIABLE packages_name)
+      if(NOT packages_name MATCHES "dist-packages")
+        set(packages_name "site-packages")
+      else()
+        set(packages_name "dist-packages")
+      endif()
     endif()
+      set(${cmake_install_pyrootdir} "${CMAKE_INSTALL_LIBDIR}/python${python_major_version}.${python_minor_version}/${packages_name}"
+            CACHE PATH "pyroot libraries and modules (LIBDIR/pythonX.Y/site-packages)")
   endif()
-    set(CMAKE_INSTALL_PYROOTDIR "${CMAKE_INSTALL_LIBDIR}/${python_dir}/${packages_name}"
-          CACHE PATH "pyroot libraries and modules (LIBDIR/pythonX.Y/site-packages)")
-endif()
+  list(APPEND pyroot_install_dirs ${cmake_install_pyrootdir})
+endforeach()
 
 if(NOT DEFINED CMAKE_INSTALL_DATAROOTDIR)
   if(gnuinstall)
@@ -227,7 +235,6 @@ mark_as_advanced(
   CMAKE_INSTALL_LIBDIR
   CMAKE_INSTALL_INCLUDEDIR
   CMAKE_INSTALL_SYSCONFDIR
-  CMAKE_INSTALL_PYROOTDIR
   CMAKE_INSTALL_MANDIR
   CMAKE_INSTALL_DATAROOTDIR
   CMAKE_INSTALL_DATADIR
@@ -241,6 +248,9 @@ mark_as_advanced(
   CMAKE_INSTALL_ELISPDIR
   CMAKE_INSTALL_CMAKEDIR
   )
+foreach(pyroot_install_dir ${pyroot_install_dirs})
+  mark_as_advanced(pyroot_install_dir)
+endforeach()
 
 # Result directories
 #
@@ -248,7 +258,6 @@ foreach(dir BINDIR
             LIBDIR
             INCLUDEDIR
             SYSCONFDIR
-            PYROOTDIR
             MANDIR
             DATAROOTDIR
             DATADIR
@@ -265,5 +274,13 @@ foreach(dir BINDIR
     set(CMAKE_INSTALL_FULL_${dir} "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_${dir}}")
   else()
     set(CMAKE_INSTALL_FULL_${dir} "${CMAKE_INSTALL_${dir}}")
+  endif()
+endforeach()
+foreach(dir ${pyroot_install_dirs})
+  string(REPLACE CMAKE_INSTALL_ "" stripped_dir ${dir})
+  if(NOT IS_ABSOLUTE ${CMAKE_INSTALL_${stripped_dir}})
+    set(CMAKE_INSTALL_FULL_${stripped_dir} "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_${stripped_dir}}")
+  else()
+    set(CMAKE_INSTALL_FULL_${stripped_dir} "${CMAKE_INSTALL_${stripped_dir}}")
   endif()
 endforeach()
