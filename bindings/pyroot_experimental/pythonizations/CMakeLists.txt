@@ -79,21 +79,16 @@ set(ROOTDirName python/ROOT)
 set(ROOT_headers inc)
 
 file(COPY ${ROOTDirName} DESTINATION ${localruntimedir})
-install(DIRECTORY ${ROOTDirName} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 foreach(val RANGE ${how_many_pythons})
   list(GET python_version_strings ${val} python_output_name)
   list(GET python_include_dirs ${val} python_include_dir)
   list(GET python_executables ${val} python_executable)
+  list(GET python_major_versions ${val} python_major_version)
 
   ROOT_LINKER_LIBRARY(ROOTPythonizations${python_output_name} ${cpp_sources} DEPENDENCIES Core Tree cppyy${python_output_name} CMAKENOEXPORT)
 
   target_include_directories(ROOTPythonizations${python_output_name} PRIVATE ${ROOT_headers} ${python_include_dir})
-
-  foreach(py_source ${py_sources})
-    install(CODE "execute_process(COMMAND ${python_executable} -m py_compile ${d}/${py_source})")
-    install(CODE "execute_process(COMMAND ${python_executable} -O -m py_compile ${d}/${py_source})")
-  endforeach()
 
   # Disables warnings caused by Py_RETURN_TRUE/Py_RETURN_FALSE
   if(NOT MSVC)
@@ -112,6 +107,22 @@ foreach(val RANGE ${how_many_pythons})
   # create egg with PyROOT info
   set(ROOT_egg "${CMAKE_CURRENT_BINARY_DIR}/PyROOT.egg")
   file(WRITE ${ROOT_egg} "PyROOT ${ROOT_VERSION}")
+
+  # Installation
+  set(cmake_install_pyrootdir ${CMAKE_INSTALL_PY${python_major_version}ROOTDIR})
+  set(CMAKE_INSTALL_LIBDIR ${cmake_install_pyrootdir})
+  install(DIRECTORY ${ROOTDirName} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+  if(IS_ABSOLUTE ${cmake_install_pyrootdir})
+    set(d $ENV{DESTDIR}/${cmake_install_pyrootdir})
+  else()
+    set(d $ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/${cmake_install_pyrootdir})
+  endif()
+  foreach(py_source ${py_sources})
+    install(CODE "execute_process(COMMAND ${python_executable} -m py_compile ${d}/${py_source})")
+    install(CODE "execute_process(COMMAND ${python_executable} -O -m py_compile ${d}/${py_source})")
+  endforeach()
+
 endforeach()
 
 # Copy headers inside build_dir/include/Pythonizations

@@ -46,10 +46,13 @@ set(sources
     src/Utility.cxx
 )
 
+install(FILES ${headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CPyCppyy)
+
 foreach(val RANGE ${how_many_pythons})
   list(GET python_include_dirs ${val} python_include_dir)
   list(GET python_version_strings ${val} python_output_name)
   list(GET python_libraries ${val} python_library)
+  list(GET python_major_versions ${val} python_major_version)
 
   add_library(cppyy${python_output_name} SHARED ${headers} ${sources})
 
@@ -89,8 +92,12 @@ foreach(val RANGE ${how_many_pythons})
   target_link_libraries(cppyy${python_output_name} cppyy_backend${python_output_name} ${python_library})
 
   set_property(GLOBAL APPEND PROPERTY ROOT_EXPORTED_TARGETS cppyy${python_output_name})
-  install(TARGETS cppyy${python_output_name} EXPORT ${CMAKE_PROJECT_NAME}Exports DESTINATION ${CMAKE_INSTALL_PYROOTDIR})
 
   file(COPY ${headers} DESTINATION ${CMAKE_BINARY_DIR}/include/CPyCppyy)
-  install(FILES ${headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CPyCppyy)
+
+  # Installation
+  set(cmake_install_pyrootdir ${CMAKE_INSTALL_PY${python_major_version}ROOTDIR})
+  set(CMAKE_INSTALL_LIBDIR ${cmake_install_pyrootdir})
+  install(TARGETS cppyy${python_output_name} EXPORT ${CMAKE_PROJECT_NAME}Exports DESTINATION ${cmake_install_pyrootdir})
+
 endforeach()
