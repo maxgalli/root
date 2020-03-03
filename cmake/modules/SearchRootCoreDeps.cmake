@@ -17,6 +17,8 @@ endif()
 
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
 
+  set(cmake14 ON)
+
   if(PYTHON_EXECUTABLE)
     execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sys;print(sys.version_info[0])"
                     OUTPUT_VARIABLE PYTHON_PREFER_VERSION
