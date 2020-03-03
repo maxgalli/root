@@ -26,6 +26,7 @@ drop_from_path()
 
 clean_environment()
 {
+   local pyroot_install_dirs=("$@")
 
    if [ -n "${old_rootsys}" ] ; then
       if [ -n "${PATH}" ]; then
@@ -35,22 +36,57 @@ clean_environment()
       if [ -n "${LD_LIBRARY_PATH}" ]; then
          drop_from_path "$LD_LIBRARY_PATH" "${old_rootsys}/lib"
          LD_LIBRARY_PATH=$newpath
+         if [ "${#pyroot_install_dirs[@]}" -ne 0 ]; then
+            for pyroot_install_dir in ${pyroot_install_dirs[@]}
+            do
+               drop_from_path "$LD_LIBRARY_PATH" "$pyroot_install_dir"
+               LD_LIBRARY_PATH=$newpath
+            done
+         fi
       fi
       if [ -n "${DYLD_LIBRARY_PATH}" ]; then
          drop_from_path "$DYLD_LIBRARY_PATH" "${old_rootsys}/lib"
          DYLD_LIBRARY_PATH=$newpath
+         if [ "${#pyroot_install_dirs[@]}" -ne 0 ]; then
+            for pyroot_install_dir in ${pyroot_install_dirs[@]}
+            do
+               drop_from_path "$DYLD_LIBRARY_PATH" "$pyroot_install_dir"
+               DYLD_LIBRARY_PATH=$newpath
+            done
+         fi
       fi
       if [ -n "${SHLIB_PATH}" ]; then
          drop_from_path "$SHLIB_PATH" "${old_rootsys}/lib"
          SHLIB_PATH=$newpath
+         if [ "${#pyroot_install_dirs[@]}" -ne 0 ]; then
+            for pyroot_install_dir in ${pyroot_install_dirs[@]}
+            do
+               drop_from_path "$SHLIB_PATH" "$pyroot_install_dir"
+               SHLIB_PATH=$newpath
+            done
+         fi
       fi
       if [ -n "${LIBPATH}" ]; then
          drop_from_path "$LIBPATH" "${old_rootsys}/lib"
          LIBPATH=$newpath
+         if [ "${#pyroot_install_dirs[@]}" -ne 0 ]; then
+            for pyroot_install_dir in ${pyroot_install_dirs[@]}
+            do
+               drop_from_path "$LIBPATH" "$pyroot_install_dir"
+               LIBPATH=$newpath
+            done
+         fi
       fi
       if [ -n "${PYTHONPATH}" ]; then
          drop_from_path "$PYTHONPATH" "${old_rootsys}/lib"
          PYTHONPATH=$newpath
+         if [ "${#pyroot_install_dirs[@]}" -ne 0 ]; then
+            for pyroot_install_dir in ${pyroot_install_dirs[@]}
+            do
+               drop_from_path "$PYTHONPATH" "$pyroot_install_dir"
+               PYTHONPATH=$newpath
+            done
+         fi
       fi
       if [ -n "${MANPATH}" ]; then
          drop_from_path "$MANPATH" "${old_rootsys}/man"
@@ -75,54 +111,136 @@ clean_environment()
          default_manpath=""
       fi
    fi
+
+   # Check value of $unset_nomatch and unset if needed
+   if [ ! -z "${unset_nomatch}" ]; then
+      setopt -o nomatch
+   fi
+
 }
 
 set_environment()
 {
+   local pyroot_install_dirs=("$@")
+
    if [ -z "${PATH}" ]; then
       PATH=@bindir@; export PATH
    else
       PATH=@bindir@:$PATH; export PATH
    fi
 
-   if [ -z "${LD_LIBRARY_PATH}" ]; then
-      LD_LIBRARY_PATH=@libdir@
-      export LD_LIBRARY_PATH       # Linux, ELF HP-UX
-   else
-      LD_LIBRARY_PATH=@libdir@:$LD_LIBRARY_PATH
-      export LD_LIBRARY_PATH
-   fi
+   if [ "${#pyroot_install_dirs[@]}" -ne 0 ]; then
+      if [ -z "${LD_LIBRARY_PATH}" ]; then
+         for pyroot_install_dir in ${pyroot_install_dirs[@]}
+         do
+            LD_LIBRARY_PATH=@libdir@:$pyroot_install_dir
+            export LD_LIBRARY_PATH       # Linux, ELF HP-UX
+         done
+      else
+         for pyroot_install_dir in ${pyroot_install_dirs[@]}
+         do
+            LD_LIBRARY_PATH=@libdir@:$pyroot_install_dir:$LD_LIBRARY_PATH
+            export LD_LIBRARY_PATH
+         done
+      fi
 
-   if [ -z "${DYLD_LIBRARY_PATH}" ]; then
-      DYLD_LIBRARY_PATH=@libdir@
-      export DYLD_LIBRARY_PATH       # Linux, ELF HP-UX
-   else
-      DYLD_LIBRARY_PATH=@libdir@:$DYLD_LIBRARY_PATH
-      export DYLD_LIBRARY_PATH
-   fi
+      if [ -z "${DYLD_LIBRARY_PATH}" ]; then
+         for pyroot_install_dir in ${pyroot_install_dirs[@]}
+         do
+            DYLD_LIBRARY_PATH=@libdir@:$pyroot_install_dir
+            export DYLD_LIBRARY_PATH       # Linux, ELF HP-UX
+         done
+      else
+         for pyroot_install_dir in ${pyroot_install_dirs[@]}
+         do
+            DYLD_LIBRARY_PATH=@libdir@:$pyroot_install_dir:$DYLD_LIBRARY_PATH
+            export DYLD_LIBRARY_PATH
+         done
+      fi
 
-   if [ -z "${SHLIB_PATH}" ]; then
-      SHLIB_PATH=@libdir@
-      export SHLIB_PATH       # Linux, ELF HP-UX
-   else
-      SHLIB_PATH=@libdir@:$SHLIB_PATH
-      export SHLIB_PATH
-   fi
+      if [ -z "${SHLIB_PATH}" ]; then
+         for pyroot_install_dir in ${pyroot_install_dirs[@]}
+         do
+            SHLIB_PATH=@libdir@:$pyroot_install_dir
+            export SHLIB_PATH       # Linux, ELF HP-UX
+         done
+      else
+         for pyroot_install_dir in ${pyroot_install_dirs[@]}
+         do
+            SHLIB_PATH=@libdir@:$pyroot_install_dir:$SHLIB_PATH
+            export SHLIB_PATH
+         done
+      fi
 
-   if [ -z "${LIBPATH}" ]; then
-      LIBPATH=@libdir@
-      export LIBPATH       # Linux, ELF HP-UX
-   else
-      LIBPATH=@libdir@:$LIBPATH
-      export LIBPATH
-   fi
+      if [ -z "${LIBPATH}" ]; then
+         for pyroot_install_dir in ${pyroot_install_dirs[@]}
+         do
+            LIBPATH=@libdir@:$pyroot_install_dir
+            export LIBPATH       # Linux, ELF HP-UX
+         done
+      else
+         for pyroot_install_dir in ${pyroot_install_dirs[@]}
+         do
+            LIBPATH=@libdir@:$pyroot_install_dir:$LIBPATH
+            export LIBPATH
+         done
+      fi
 
-   if [ -z "${PYTHONPATH}" ]; then
-      PYTHONPATH=@libdir@
-      export PYTHONPATH       # Linux, ELF HP-UX
+      if [ -z "${PYTHONPATH}" ]; then
+         for pyroot_install_dir in ${pyroot_install_dirs[@]}
+         do
+            PYTHONPATH=@libdir@:$pyroot_install_dir
+            export PYTHONPATH       # Linux, ELF HP-UX
+         done
+      else
+         for pyroot_install_dir in ${pyroot_install_dirs[@]}
+         do
+            PYTHONPATH=@libdir@:$pyroot_install_dir:$PYTHONPATH
+            export PYTHONPATH
+         done
+      fi
+
    else
-      PYTHONPATH=@libdir@:$PYTHONPATH
-      export PYTHONPATH
+
+      if [ -z "${LD_LIBRARY_PATH}" ]; then
+         LD_LIBRARY_PATH=@libdir@
+         export LD_LIBRARY_PATH       # Linux, ELF HP-UX
+      else
+         LD_LIBRARY_PATH=@libdir@:$LD_LIBRARY_PATH
+         export LD_LIBRARY_PATH
+      fi
+
+      if [ -z "${DYLD_LIBRARY_PATH}" ]; then
+         DYLD_LIBRARY_PATH=@libdir@
+         export DYLD_LIBRARY_PATH       # Linux, ELF HP-UX
+      else
+         DYLD_LIBRARY_PATH=@libdir@:$DYLD_LIBRARY_PATH
+         export DYLD_LIBRARY_PATH
+      fi
+
+      if [ -z "${SHLIB_PATH}" ]; then
+         SHLIB_PATH=@libdir@
+         export SHLIB_PATH       # Linux, ELF HP-UX
+      else
+         SHLIB_PATH=@libdir@:$SHLIB_PATH
+         export SHLIB_PATH
+      fi
+
+      if [ -z "${LIBPATH}" ]; then
+         LIBPATH=@libdir@
+         export LIBPATH       # Linux, ELF HP-UX
+      else
+         LIBPATH=@libdir@:$LIBPATH
+         export LIBPATH
+      fi
+
+      if [ -z "${PYTHONPATH}" ]; then
+         PYTHONPATH=@libdir@
+         export PYTHONPATH       # Linux, ELF HP-UX
+      else
+         PYTHONPATH=@libdir@:$PYTHONPATH
+         export PYTHONPATH
+      fi
    fi
 
    if [ -z "${MANPATH}" ]; then
@@ -175,9 +293,20 @@ else
    ROOTSYS=$(cd ${thisroot}/.. > /dev/null;pwd); export ROOTSYS
 fi
 
+if [ ! -d "$ROOTSYS/CMakeFiles" ]; then
+   cmake_install_dirs=()
+   install_dir2=@CMAKE_INSTALL_FULL_PY2ROOTDIR@
+   install_dir3=@CMAKE_INSTALL_FULL_PY3ROOTDIR@
+   for install_dir in ${install_dir2} ${install_dir3}
+   do
+      if [ ! -z  "${install_dir}" ]; then
+         cmake_install_dirs+=(${install_dir})
+      fi
+   done
+fi
 
-clean_environment
-set_environment
+clean_environment "${cmake_install_dirs[@]}"
+set_environment "${cmake_install_dirs[@]}"
 
 
 # Prevent Cppyy from checking the PCH (and avoid warning)
