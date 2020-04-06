@@ -237,6 +237,10 @@ typedefs (in particular `Double32_t`)
 - The macros `REFLEX_GENERATE_DICTIONARY()` and `ROOT_GENERATE_DICTIONARY()` can
   now have custom extra dependencies added with the options `DEPENDS` and
   `EXTRA_DEPENDENCIES`, respectively.
+- python-dev is now required and the compilation will fail if CMake is not able
+  to find it.
+- CMake variable `-Dpython={OFF, ON}` is now deprecated in favour of `-Dpyroot={OFF,
+  ON}`; python interpreter and python-dev are indeed always required.
 
 The following builtins have been updated:
 
