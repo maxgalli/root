@@ -24,6 +24,7 @@ file(COPY ${cppyy_backendPySrcDir}
 foreach(val RANGE ${how_many_pythons})
   list(GET python_under_version_strings ${val} python_under_version_string)
   list(GET python_executables ${val} python_executable)
+  list(GET python_system_dirs ${val} python_system_dir)
 
   set(libname cppyy_backend${python_under_version_string})
 
@@ -42,6 +43,11 @@ foreach(val RANGE ${how_many_pythons})
                              RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT libraries
                              LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries
                              ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
+
+  # Install Python sources and bytecode in Python system directories
+  install(DIRECTORY ${localruntimedir}/cppyy_backend
+          DESTINATION ${python_system_dir}
+          COMPONENT libraries)
 
   # Compile .py files
   foreach(py_source ${py_sources})

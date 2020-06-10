@@ -89,6 +89,7 @@ foreach(val RANGE ${how_many_pythons})
   list(GET python_under_version_strings ${val} python_under_version_string)
   list(GET python_include_dirs ${val} python_include_dir)
   list(GET python_executables ${val} python_executable)
+  list(GET python_system_dirs ${val} python_system_dir)
 
   set(libname ROOTPythonizations${python_under_version_string})
 
@@ -116,6 +117,11 @@ foreach(val RANGE ${how_many_pythons})
     target_compile_options(${libname} PRIVATE -Wno-register)
     target_compile_options(${libname} PRIVATE -Wno-deprecated-register)
   endif()
+
+  # Install Python sources and bytecode in Python system directories
+  install(DIRECTORY ${localruntimedir}/ROOT
+          DESTINATION ${python_system_dir}
+          COMPONENT libraries)
 
   # Compile .py files
   foreach(py_source ${py_sources})
