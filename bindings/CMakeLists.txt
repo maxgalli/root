@@ -15,6 +15,24 @@ if(pyroot)
     list(LENGTH python_executables len)
     math(EXPR how_many_pythons "${len} - 1")
 
+    # Fill python_system_dirs with path to system directories for each python executable
+    foreach(val RANGE ${how_many_pythons})
+      list(GET python_executables ${val} python_executable)
+      list(GET python_version_majors ${val} python_version_major)
+      list(GET python_version_minors ${val} python_version_minor)
+      if(WIN32)
+        list(APPEND python_system_dirs "${CMAKE_INSTALL_PREFIX}/${LIBDIR}/python/site-packages")
+      else()
+        execute_process(COMMAND bash -c "${python_executable} -m site | grep -q dist-packages && echo dist-packages" OUTPUT_VARIABLE packages_name)
+        if(NOT packages_name MATCHES "dist-packages")
+          set(packages_name "site-packages")
+        else()
+          set(packages_name "dist-packages")
+        endif()
+        list(APPEND python_system_dirs "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/python${python_version_major}.${python_version_minor}/${packages_name}")
+      endif()
+    endforeach()
+
     # install_dir_lib contains the path to installation_directory/lib
     # where the python packages like ROOT, cppyy, cppyy_backend are
     # installed

@@ -255,4 +255,7 @@ set(python_executables ${PYTHON_EXECUTABLE_Development_Main} ${PYTHON_EXECUTABLE
 set(python_include_dirs ${PYTHON_INCLUDE_DIRS_Development_Main} ${PYTHON_INCLUDE_DIRS_Development_Other})
 set(python_version_strings ${PYTHON_VERSION_STRING_Development_Main} ${PYTHON_VERSION_STRING_Development_Other})
 set(python_under_version_strings ${PYTHON_UNDER_VERSION_STRING_Development_Main} ${PYTHON_UNDER_VERSION_STRING_Development_Other})
+set(python_version_majors ${PYTHON_VERSION_MAJOR_Development_Main} ${PYTHON_VERSION_MAJOR_Development_Other})
+set(python_version_minors ${PYTHON_VERSION_MINOR_Development_Main} ${PYTHON_VERSION_MINOR_Development_Other})
 set(python_libraries ${PYTHON_LIBRARIES_Development_Main} ${PYTHON_LIBRARIES_Development_Other})
+set(python_system_dirs)
